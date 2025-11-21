@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Product } from "./interface/product.interface";
 import { getProducts } from "./service/product.service";
 import ProductModal from "./components/productModel";
@@ -7,14 +7,13 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filtered, setFiltered] = useState<Product[]>([]);
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
+  const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
 
   useEffect(() => {
     getProducts()
       .then((res) => {
         setProducts(res.data);
-        setFiltered(res.data);
       })
       .catch(() => {
         alert("Không thể tải danh sách sản phẩm")
@@ -22,15 +21,19 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
-
-    const result = products.filter((p) =>
-      p.title.toLowerCase().includes(value.toLowerCase())
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((p) =>
+      p.title.toLowerCase().includes(search.toLowerCase())
     );
 
-    setFiltered(result);
-  };
+    if (sortOrder === "asc") {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (sortOrder === "desc") {
+      result = [...result].sort((a, b) => b.price - a.price);
+    }
+
+    return result;
+  }, [search, sortOrder, products]);
 
 
   if (loading) return <p className="w-screen h-screen flex items-center justify-center">Đang tải...</p>;
@@ -39,17 +42,27 @@ function App() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4 text-center">Danh sách sản phẩm</h1>
 
-      <div className="md:max-w-md md:mx-auto mb-6 w-full">
+      <div className="gap-3 mb-6 flex flex-col md:max-w-lg md:mx-auto md:flex-row">
         <input
           type="text"
           value={search}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm sản phẩm..."
           className="w-full p-3 border rounded shadow-sm"
         />
+
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as "default" | "asc" | "desc")}
+          className="p-3 border rounded shadow-sm"
+        >
+          <option value="default">Mặc định</option>
+          <option value="asc">Giá tăng dần</option>
+          <option value="desc">Giá giảm dần</option>
+        </select>
       </div>
 
-      {filtered.length === 0 && (
+      {filteredProducts.length === 0 && (
         <p className="text-center text-gray-600">Không tìm thấy sản phẩm.</p>
       )}
 
@@ -64,7 +77,7 @@ function App() {
         "
       >
         {
-          filtered.slice(0, 20).map((product) => (
+          filteredProducts.slice(0, 20).map((product) => (
             <div key={product.id} className="border p-4 rounded shadow h-full flex flex-col">
               <img
                 src={product.image}
