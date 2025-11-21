@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Product } from "./interface/product.interface";
 import { getProducts } from "./service/product.service";
 import ProductModal from "./components/productModel";
+import { ITEMS_PER_PAGE } from "./constant/common";
+import Pagination from "./components/pagination";
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -9,6 +11,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
   const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     getProducts()
@@ -35,6 +38,13 @@ function App() {
     return result;
   }, [search, sortOrder, products]);
 
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const displayedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
 
   if (loading) return <p className="w-screen h-screen flex items-center justify-center">Đang tải...</p>;
 
@@ -46,14 +56,20 @@ function App() {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           placeholder="Tìm sản phẩm..."
           className="w-full p-3 border rounded shadow-sm"
         />
 
         <select
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as "default" | "asc" | "desc")}
+          onChange={(e) => {
+            setSortOrder(e.target.value as "default" | "asc" | "desc");
+            setCurrentPage(1);
+          }}
           className="p-3 border rounded shadow-sm"
         >
           <option value="default">Mặc định</option>
@@ -62,7 +78,7 @@ function App() {
         </select>
       </div>
 
-      {filteredProducts.length === 0 && (
+      {displayedProducts.length === 0 && (
         <p className="text-center text-gray-600">Không tìm thấy sản phẩm.</p>
       )}
 
@@ -77,7 +93,7 @@ function App() {
         "
       >
         {
-          filteredProducts.slice(0, 20).map((product) => (
+          displayedProducts.slice(0, 20).map((product) => (
             <div key={product.id} className="border p-4 rounded shadow h-full flex flex-col">
               <img
                 src={product.image}
@@ -103,6 +119,12 @@ function App() {
           ))
         }
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
 
       {modalProduct && (
         <ProductModal

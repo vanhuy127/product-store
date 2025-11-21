@@ -24,7 +24,7 @@ export default function ProductModal({ product, onClose }: Props) {
                 />
                 <h2 className="text-xl font-bold mb-2">{product.title}</h2>
                 <p className="text-green-600 font-semibold mb-2">${product.price}</p>
-                <p className="mb-4">{product.description}</p>
+                <p className="mb-4 max-h-[200px] overflow-y-scroll">{product.description}</p>
                 <button
                     onClick={onClose}
                     className="bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded"
