@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Product } from "./interface/product.interface";
 import { getProducts } from "./service/product.service";
+import ProductModal from "./components/productModel";
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filtered, setFiltered] = useState<Product[]>([]);
+  const [modalProduct, setModalProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     getProducts()
@@ -78,16 +80,23 @@ function App() {
                 ${product.price}
               </p>
 
-              <a
-                href={`/product/${product.id}`}
+              <button
+                onClick={() => setModalProduct(product)}
                 className="block bg-cyan-600 hover:bg-cyan-700 text-white text-center py-2 rounded"
               >
                 Xem chi tiết
-              </a>
+              </button>
             </div>
           ))
         }
       </div>
+
+      {modalProduct && (
+        <ProductModal
+          product={modalProduct}
+          onClose={() => setModalProduct(null)}
+        />
+      )}
     </div>
   );
 }
